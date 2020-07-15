@@ -46,6 +46,43 @@ text_processor = TextPreProcessor(
     dicts=[emoticons]
 )
 
+def load_train():
+    training = pd.read_csv('agr_en_train.csv', encoding='utf-8')
+    training = training.fillna('nothing')
+    arr = training.as_matrix()
+    corpus = arr[:,1]
+    y = arr[:,2]
+    for i in range(len(y)):
+        if (y[i] == 'NAG'):
+            y[i] = 0
+        elif (y[i] =='OAG'):
+            y[i] = 2
+        elif (y[i] == 'CAG'):
+            y[i] = 1
+    corpus = corpus.tolist()        
+    y = y.astype(int)
+    return corpus, y
+
+def clean_data(corpus):
+    new_corp = []
+    # spell correct
+    for i in range(len(corpus)):
+        t = text_processor.pre_process_doc(corpus[i])
+        t = [sp.correct(word) for word in t if word not in string.punctuation]
+        new_corp.append(" ".join(t))
+    new_corp2 = []
+    # lemmatize
+    for i in range(len(corpus)):
+        if (i%1000 == 0):
+            print (i) # for logging purpose
+        t = new_corp[i].split(" ")
+        to_add = []
+        for i in t:
+            if i not in stop_words:
+                to_add.append(wordnet_lemmatizer.lemmatize(i))
+        new_corp2.append(" ".join(to_add))
+    del new_corp
+    return new_corp2
 
 sp = SpellCorrector(corpus="english") 
 wordnet_lemmatizer = WordNetLemmatizer()
